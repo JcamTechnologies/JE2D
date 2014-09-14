@@ -1,0 +1,26 @@
+1-- resources
+2-- init
+3-- update error
+4-- render error
+
+101 = failed to load script
+102 = failed to load bitmap
+103 = failed to load sample
+104 = failed to save things
+
+201 = al_init() fail
+202 = al_create_timer() fail
+203 = al_create_event_queue() fail
+204 = al_install_mouse() fail
+205 = al_install_keyboard() fail
+206 = al_install_audio() fail
+207 = al_init_acodec_addon() fail
+208 = al_reserve_samples() fail
+209 = al_create_display()/al_resize_display() fail
+210 = al_install_keyboard() fail
+211 = Failed to run script
+212 = Failed to load shader
+
+301 = failed on update script
+
+401 = failed on render script
