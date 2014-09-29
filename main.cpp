@@ -9,7 +9,7 @@ int main(int argc, char** argv) {
 		framework->handle_error(error);
 		return 1;
 	}
-	while(1)
+	while(framework->exit == false)
 	{
 		error = framework->update();
 		if(error)

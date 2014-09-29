@@ -18,6 +18,7 @@ namespace JE2D
 			void stopAll();
 			bool exists(std::string index);
 			void remove(std::string index);
+			void removeAll();
 		private:
 			std::map<std::string, ALLEGRO_SAMPLE*> samples;
 			std::map<std::string, ALLEGRO_SAMPLE_ID*> playing;

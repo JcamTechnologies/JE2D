@@ -45,10 +45,9 @@ namespace JE2D
 	        void logData(const char *data, int variable);
 	        void logData(const char *data);
 			void handle_error(int error);
-			void registerSystemVariables(lua_State* L);
 			bool redraw;
 			bool keys[ALLEGRO_KEY_MAX];
-			
+			bool exit;
 		protected:
 			// Protected Declarations
 	};

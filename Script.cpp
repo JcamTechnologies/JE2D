@@ -43,6 +43,7 @@ void Script::init()
 		{"getTileY", Player_getTileY},
 		{"render", Player_render},
 		{"move", Player_move},
+		{"getDir", Player_getDir},
 		{NULL, NULL}
 	};
 	
@@ -66,6 +67,7 @@ void Script::init()
 		{"play", Sound_play},
 		{"stop", Sound_stop},
 		{"stopAll", Sound_stopAll},
+		{"removeAll", Sound_removeAll},
 		{NULL, NULL}
 	};
 	static luaL_Reg Scene_metatable[] =
@@ -78,12 +80,44 @@ void Script::init()
 		{"setPlayerAnim", Scene_addPlayerAnim},
 		{"loadFont", Scene_loadFont},
 		{"addText", Scene_setText},
+		{"addTextC", Scene_setTextC},
+		{"addTimedTextC", Scene_setTextC},
 		{"addTimedText", Scene_setTimedText},
 		{"deleteText", Scene_deleteText},
 		{"editText", Scene_editText},
 		{"editTextTime", Scene_editTextTime},
 		{"update", Scene_update},
 		{"render", Scene_render},
+		{"renderGUI", Scene_renderGUI},
+		{"addCharacter", Scene_addCharacter},
+		{"addEntity", Scene_addEntity},
+		{"getCharacter", Scene_getCharacter},
+		{"getEntity", Scene_getEntity},
+		{"deleteCharacter", Scene_deleteCharacter},
+		{"deleteEntity", Scene_deleteEntity},
+		{NULL, NULL}
+	};
+	static luaL_Reg Entity_metatable[] =
+	{
+		{"getX",Entity_getX},
+		{"getY",Entity_getY},
+		{"setPos",Entity_setPos},
+		{"getMeta",Entity_getMeta},
+		{"setMeta",Entity_setMeta},
+		{"getDir",Entity_getDir},
+		{"setDir",Entity_setDir},
+		{NULL, NULL}
+	};
+	static luaL_Reg Character_metatable[] =
+	{
+		{"getX",Character_getX},
+		{"getY",Character_getY},
+		{"setPos",Character_setPos},
+		{"getMeta",Character_getMeta},
+		{"setMeta",Character_setMeta},
+		{"getDir",Character_getDir},
+		{"setDir",Character_setDir},
+		{"addAnim", Character_addAnim},
 		{NULL, NULL}
 	};
 	
@@ -91,6 +125,8 @@ void Script::init()
 	{
 		{"load", Image_load},
 		{"draw", Image_draw},
+		{"drawRotatedD", Image_drawRotD},
+		{"drawRotatedR", Image_drawRotR},
 		{NULL, NULL}
 	};
 	
@@ -106,6 +142,10 @@ void Script::init()
 	luaW_register<JPLAYER>(L, "Player", Map_table, Player_metatable, Player_new);
 	std::cout<<"Registering Scene" << std::endl;
 	luaW_register<Scene>(L, "Scene", Map_table, Scene_metatable, Scene_new);
+	std::cout<<"Registering Entity" << std::endl;
+	luaW_register<Entity>(L, "Entity", Map_table, Entity_metatable, Entity_new);
+	std::cout<<"Registering Character" << std::endl;
+	luaW_register<Character>(L, "Character", Map_table, Character_metatable, Character_new);
 	
 }
 
@@ -116,11 +156,13 @@ lua_State* Script::run(std::string filename)
 	if(luaL_loadfile(tmp, filename.c_str()))
 	{
 		std::cout << "Failed to load file:"<<filename<<std::endl;
+		std::cout<<lua_tostring(L, -1)<<std::endl;
 		return NULL;
 	}
 	if(lua_pcall(tmp, 0, 0, 0))
 	{
 		std::cout << "Failed to run script:" << filename<< std::endl;
+		std::cout<<lua_tostring(L, -1)<<std::endl;
 		return NULL;
 	}
 	L = tmp;

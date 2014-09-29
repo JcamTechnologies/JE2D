@@ -93,7 +93,7 @@ void JPLAYER::movePlayer(int direction, int pixels)
 		{
 			case LEFT:
 				dir = LEFT;
-				if(!collide(LEFT))
+				if(!collide(LEFT) && x > 0)
 				{
 					x--;
 					move++;
@@ -105,7 +105,7 @@ void JPLAYER::movePlayer(int direction, int pixels)
 
 			case RIGHT:
 				dir = RIGHT;
-				if(!collide(RIGHT))
+				if(!collide(RIGHT)&& x < 3999)
 				{
 					x++;
 					move++;
@@ -117,7 +117,7 @@ void JPLAYER::movePlayer(int direction, int pixels)
 
 			case UP:
 				dir = UP;
-				if(!collide(UP))
+				if(!collide(UP)&& y > 0)
 				{
 					y--;
 					move++;
@@ -129,7 +129,7 @@ void JPLAYER::movePlayer(int direction, int pixels)
 
 			case DOWN:
 				dir = DOWN;
-				if(!collide(DOWN))
+				if(!collide(DOWN)&& y < 3999)
 				{
 					y++;
 					move++;

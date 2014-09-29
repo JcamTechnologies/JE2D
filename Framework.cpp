@@ -4,6 +4,7 @@ using namespace JE2D;
 
 JFRAMEWORK::JFRAMEWORK()
 {
+	exit = false;
 }
 
 JFRAMEWORK::~JFRAMEWORK()
@@ -113,6 +114,8 @@ int JFRAMEWORK::init()
 	{
 		return 211;
 	}
+	lua_pushnumber(L, 0);
+	lua_setglobal(L, "EXIT");
 	lua_getglobal(L, "DISPX");
 	lua_getglobal(L, "DISPY");
 	if (!lua_isnumber(L, -2)) {
@@ -168,6 +171,14 @@ int JFRAMEWORK::update()
 		logData(lua_tostring(L, -1));
 		return 301;
 	}
+	lua_getglobal(L, "EXIT");
+	int e = (int)lua_tonumber(L, -1);
+	if(e == 1)
+	{
+		logData("Exited successfully");
+		exit = true;
+	}
+	
 	return 0;
 }
 

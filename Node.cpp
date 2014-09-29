@@ -4,6 +4,8 @@ using namespace JE2D;
 
 Node::Node()
 {
+	child = NULL;
+	parent = NULL;
 }
 
 Node::~Node()

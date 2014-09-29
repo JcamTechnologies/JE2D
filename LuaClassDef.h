@@ -11,6 +11,8 @@
 #include "Player.h"
 #include "Map.h"
 #include "Sound.h"
+#include "Entity.h"
+#include "Character.h"
 #include "scene.h"
 #include "Image.h"
 #include "GUI.h"
@@ -57,7 +59,12 @@ int Sound_remove(lua_State* L)
 	s->remove(luaL_checkstring(L, 2));
 	return 0;
 }
-
+int Sound_removeAll(lua_State* L)
+{
+	Sound* s = luaW_check<Sound>(L, 1);
+	s->removeAll();
+	return 0;
+}
 int Sound_play(lua_State* L)
 {
 	Sound* s = luaW_check<Sound>(L, 1);
@@ -181,6 +188,18 @@ int Player_getTileY(lua_State* L)
 	lua_pushnumber(L,(p->y+10)/20);
 	return 1;
 }
+int Player_getDir(lua_State* L)
+{
+	JPLAYER* p = luaW_check<JPLAYER>(L, 1);
+	lua_pushnumber(L, p->dir);
+	return 1;
+}
+int Player_setDir(lua_State* L)
+{
+	JPLAYER* p = luaW_check<JPLAYER>(L, 1);
+	p->dir = luaL_checknumber(L, 2);
+	return 0;
+}
 JMAP* Map_new(lua_State* L)
 {
 	const char* mapFilename = luaL_checkstring(L, 1);
@@ -255,6 +274,12 @@ int Scene_render(lua_State* L)
 	s->renderScene();
 	return 0;
 }
+int Scene_renderGUI(lua_State* L)
+{
+	Scene* s = luaW_check<Scene>(L, 1);
+	s->postRenderScene();
+	return 0;
+}
 int Scene_getPlayer(lua_State* L)
 {
 	Scene* s = luaW_check<Scene>(L, 1);
@@ -281,6 +306,7 @@ int Scene_addPlayerAnim(lua_State* L)
 	int frames = luaL_checknumber(L, 4);
 	int speed = luaL_checknumber(L, 5);
 	std::string fname = luaL_checkstring(L, 6);
+	std::cout << type <<std::endl;
 	if(type == 1)
 	{
 		switch (dir)
@@ -332,6 +358,18 @@ int Scene_setText(lua_State* L)
 	lua_pushnumber(L, s->gui->addText(luaL_checkstring(L, 2), luaL_checknumber(L, 3), luaL_checknumber(L, 4)));
 	return 1;
 }
+int Scene_setTextC(lua_State* L)
+{
+	Scene* s = luaW_check<Scene>(L,1);
+	lua_pushnumber(L, s->gui->addText(luaL_checkstring(L, 2), luaL_checknumber(L, 3), luaL_checknumber(L, 4), al_map_rgb(luaL_checknumber(L, 5), luaL_checknumber(L, 6), luaL_checknumber(L, 7))));
+	return 1;
+}
+int Scene_setTimedTextC(lua_State* L)
+{
+	Scene* s = luaW_check<Scene>(L,1);
+	lua_pushnumber(L, s->gui->addTimedText(luaL_checkstring(L, 2), luaL_checknumber(L, 3), luaL_checknumber(L, 4), luaL_checknumber(L, 5), al_map_rgb(luaL_checknumber(L, 5), luaL_checknumber(L, 6), luaL_checknumber(L, 7))));
+	return 1;
+}
 int Scene_setTimedText(lua_State* L)
 {
 	Scene* s = luaW_check<Scene>(L,1);
@@ -342,14 +380,14 @@ int Scene_deleteText(lua_State* L)
 {
 	Scene* s = luaW_check<Scene>(L, 1);
 	int key = luaL_checknumber(L, 2);
-	s->gui->t[key].txt = "\0";
+	s->gui->editText(key, " ");
 	return 0;
 }
 int Scene_editText(lua_State* L)
 {
 	Scene* s = luaW_check<Scene>(L, 1);
 	int key = luaL_checknumber(L, 2);
-	s->gui->t[key].txt = luaL_checkstring(L, 3);
+	s->gui->editText(key, luaL_checkstring(L, 3));
 	return 0;
 }
 int Scene_editTextTime(lua_State* L)
@@ -357,6 +395,43 @@ int Scene_editTextTime(lua_State* L)
 	Scene* s = luaW_check<Scene>(L, 1);
 	int key = luaL_checknumber(L, 2);
 	s->gui->t[key].txt = luaL_checknumber(L, 3);
+	return 0;
+}
+int Scene_addCharacter(lua_State* L)
+{
+	Scene* s = luaW_check<Scene>(L, 1);
+	lua_pushnumber(L, s->addCharacter());
+	return 1;
+}
+int Scene_addEntity(lua_State* L)
+{
+	Scene* s = luaW_check<Scene>(L, 1);
+	lua_pushnumber(L, s->addEntity());
+	return 1;
+}
+int Scene_getCharacter(lua_State* L)
+{
+	Scene* s = luaW_check<Scene>(L, 1);
+	Character* c = s->getCharacter(luaL_checknumber(L, 2));
+	luaW_push<Character>(L, c);
+	return 1;
+}
+int Scene_getEntity(lua_State* L)
+{
+	Scene* s = luaW_check<Scene>(L, 1);
+	luaW_push<Entity>(L, s->getEntity(luaL_checknumber(L, 2)));
+	return 1;
+}
+int Scene_deleteCharacter(lua_State* L)
+{
+	Scene* s = luaW_check<Scene>(L, 1);
+	s->deleteCharacter(luaL_checknumber(L, 2));
+	return 0;
+}
+int Scene_deleteEntity(lua_State* L)
+{
+	Scene* s = luaW_check<Scene>(L, 1);
+	s->deleteEntity(luaL_checknumber(L,2));
 	return 0;
 }
 IMAGE* Image_new(lua_State* L)
@@ -389,5 +464,173 @@ int Image_draw(lua_State* L)
 	}
 	return 0;
 }
+int Image_drawRotR(lua_State* L)
+{
+	IMAGE* i = luaW_check<IMAGE>(L,1);
+	if(i->b)
+	{
+		al_draw_rotated_bitmap(i->b, luaL_checknumber(L, 2), luaL_checknumber(L, 3), luaL_checknumber(L, 4), luaL_checknumber(L, 5), luaL_checknumber(L, 6), 0);
+	}
+}
+int Image_drawRotD(lua_State* L)
+{
+	IMAGE* i = luaW_check<IMAGE>(L,1);
+	if(i->b)
+	{
+		al_draw_rotated_bitmap(i->b, luaL_checknumber(L, 2), luaL_checknumber(L, 3), luaL_checknumber(L, 4), luaL_checknumber(L, 5), (luaL_checknumber(L, 6))*(ALLEGRO_PI/180), 0);
+	}
+}
+Entity* Entity_new(lua_State* L)
+{
+	Entity* e = new Entity();
+	e->Init();
+	return e;
+}
+int Entity_getX(lua_State* L)
+{
+	Entity* e = luaW_check<Entity>(L, 1);
+	lua_pushnumber(L, e->x);
+	return 1;
+}
+int Entity_getY(lua_State* L)
+{
+	Entity* e = luaW_check<Entity>(L, 1);
+	lua_pushnumber(L, e->y);
+	return 1;
+}
+int Entity_setPos(lua_State* L)
+{
+	Entity* e = luaW_check<Entity>(L, 1);
+	e->x = luaL_checknumber(L, 2);
+	e->y = luaL_checknumber(L, 3);
+	return 0;
+}
+int Entity_setMeta(lua_State* L)
+{
+	Entity* e = luaW_check<Entity>(L, 1);
+	e->meta[luaL_checkstring(L, 2)]=luaL_checkstring(L, 3);
+	return 0;
+}
+int Entity_getMeta(lua_State* L)
+{
+	Entity* e = luaW_check<Entity>(L, 1);
+	lua_pushstring(L, e->meta[(std::string)luaL_checkstring(L, 2)].c_str());
+	return 1;
+}
+int Entity_getDir(lua_State* L)
+{
+	Entity* e = luaW_check<Entity>(L, 1);
+	lua_pushnumber(L, e->dir);
+	return 1;
+}
+int Entity_setDir(lua_State* L)
+{
+	Entity* e = luaW_check<Entity>(L, 1);
+	e->dir = luaL_checknumber(L, 2);
+	return 0;
+}
 
+Character* Character_new(lua_State* L)
+{
+	Character* c = new Character();
+	c->Init();
+	return c;
+}
+int Character_getX(lua_State* L)
+{
+	Character* c = luaW_check<Character>(L, 1);
+	lua_pushnumber(L, c->x);
+	return 1;
+}
+int Character_getY(lua_State* L)
+{
+	Character* c = luaW_check<Character>(L, 1);
+	lua_pushnumber(L, c->y);
+	return 1;
+}
+int Character_setPos(lua_State* L)
+{
+	Character* c = luaW_check<Character>(L, 1);
+	c->x = luaL_checknumber(L, 2);
+	c->y = luaL_checknumber(L, 3);
+	return 0;
+}
+int Character_setMeta(lua_State* L)
+{
+	Character* c = luaW_check<Character>(L, 1);
+	c->meta[luaL_checkstring(L, 2)]=luaL_checkstring(L, 3);
+	return 0;
+}
+int Character_getMeta(lua_State* L)
+{
+	Character* c = luaW_check<Character>(L, 1);
+	lua_pushstring(L, c->meta[(std::string)luaL_checkstring(L, 2)].c_str());
+	return 1;
+}
+int Character_getDir(lua_State* L)
+{
+	Character* c = luaW_check<Character>(L, 1);
+	lua_pushnumber(L, c->dir);
+	return 1;
+}
+int Character_setDir(lua_State* L)
+{
+	Character* c = luaW_check<Character>(L, 1);
+	c->dir = luaL_checknumber(L, 2);
+	return 0;
+}
+int Character_addAnim(lua_State* L)
+{
+	Character* c = luaW_check<Character>(L, 1);
+	int type = luaL_checknumber(L, 2);
+	int dir = luaL_checknumber(L, 3);
+	int frames = luaL_checknumber(L, 4);
+	int speed = luaL_checknumber(L, 5);
+	std::string fname = luaL_checkstring(L, 6);
+	bool error = true;
+	if(type == 1)
+	{
+		switch (dir)
+		{
+			case LEFT:
+				error=c->moveL->load(fname, frames, 20, 20, speed);
+				break;
+			case RIGHT:
+				error=c->moveR->load(fname, frames, 20, 20, speed);
+				break;
+			case UP:
+				error=c->moveU->load(fname, frames, 20, 20, speed);
+				break;
+			case DOWN:
+				error=c->moveD->load(fname, frames, 20, 20, speed);
+				break;
+		}
+	}
+	if(type == 0)
+	{
+		switch (dir)
+		{
+			case LEFT:
+				error=c->idleL->load(fname, frames, 20, 20, speed);
+				break;
+			case RIGHT:
+				error=c->idleR->load(fname, frames, 20, 20, speed);
+				break;
+			case UP:
+				error=c->idleU->load(fname, frames, 20, 20, speed);
+				break;
+			case DOWN:
+				error=c->idleD->load(fname, frames, 20, 20, speed);
+				break;
+		}
+	}
+	if(error==false)
+	{
+		lua_pushnumber(L, 1);
+	}else
+	{
+		lua_pushnumber(L, 0);
+	}
+	return 1;
+}
 #endif

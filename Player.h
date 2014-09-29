@@ -35,6 +35,7 @@ namespace JE2D
 			void onRender();
 			bool collide(int direction);
 			void movePlayer(int direction, int pixels);
+			//bool addItemToInv(JITEM i);
 			int health;
 			int attack;
 			int defence;

@@ -24,8 +24,11 @@ int GUI::addText(std::string text, int x, int y)
 	tmp.x=x;
 	tmp.y=y;
 	tmp.time = -1;
+	tmp.color = al_map_rgb(255, 240, 255);
+	tmp.ID = currentID+1;
 	t.push_back(tmp);
-	return t.size()-1;
+	currentID++;
+	return currentID;
 }
 int GUI::addTimedText(std::string text, int x, int y, int time)
 {
@@ -34,8 +37,48 @@ int GUI::addTimedText(std::string text, int x, int y, int time)
 	tmp.x=x;
 	tmp.y=y;
 	tmp.time = time;
+	tmp.color = al_map_rgb(255, 240, 255);
+	tmp.ID = currentID+1;
 	t.push_back(tmp);
-	return t.size()-1;
+	currentID++;
+	return currentID;
+}
+int GUI::addText(std::string text, int x, int y, ALLEGRO_COLOR color)
+{
+	TEXT tmp;
+	tmp.txt = text;
+	tmp.x=x;
+	tmp.y=y;
+	tmp.time = -1;
+	tmp.color = color;
+	tmp.ID = currentID+1;
+	t.push_back(tmp);
+	currentID++;
+	return currentID;
+}
+int GUI::addTimedText(std::string text, int x, int y, int time, ALLEGRO_COLOR color)
+{
+	TEXT tmp;
+	tmp.txt = text;
+	tmp.x=x;
+	tmp.y=y;
+	tmp.time = time;
+	tmp.color = color;
+	tmp.ID = currentID+1;
+	t.push_back(tmp);
+	currentID++;
+	return currentID;
+}
+void GUI::editText(int id, std::string text)
+{
+	for(std::vector<TEXT>::iterator it = t.begin(); it < t.end(); it++)
+		{
+			if(it->ID == id)
+			{
+				it->txt = text;
+				return;
+			}
+		}
 }
 void GUI::render()
 {
@@ -45,14 +88,13 @@ void GUI::render()
 		{
 			if(it->time == -1)
 			{
-				al_draw_text(font, al_map_rgb(255,240,255), it->x, it->y, ALLEGRO_ALIGN_LEFT, it->txt.c_str());
+				al_draw_text(font, it->color, it->x, it->y, ALLEGRO_ALIGN_LEFT, it->txt.c_str());
 			}
 			if(it->time > 0)
 			{
 				it->time--;
-				al_draw_text(font, al_map_rgb(255,240,255), it->x, it->y, ALLEGRO_ALIGN_LEFT, it->txt.c_str());
+				al_draw_text(font, it->color, it->x, it->y, ALLEGRO_ALIGN_LEFT, it->txt.c_str());
 			}
-			
 		}
 	}
 }

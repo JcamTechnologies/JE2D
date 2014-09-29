@@ -20,10 +20,10 @@ void JOBJECT::init()
 void JOBJECT::update()
 {
 	onUpdate();
-	/*if(getChild())
+	if(getChild())
 	{
 		((JOBJECT*)getChild())->update();
-	}*/
+	}
 }
 
 void JOBJECT::render()

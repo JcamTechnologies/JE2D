@@ -13,6 +13,9 @@ namespace JE2D
 		std::string txt;
 		int x, y;
 		int time;
+		int ID;
+		bool del=false;
+		ALLEGRO_COLOR color;
 	} TEXT;
 	class GUI
 	{
@@ -22,9 +25,13 @@ namespace JE2D
 			void render();
 			//void update();
 			int addText(std::string text, int x, int y);
+			int addText(std::string text, int x, int y, ALLEGRO_COLOR color);
 			int addTimedText(std::string text, int x, int y, int time);
+			int addTimedText(std::string text, int x, int y, int time, ALLEGRO_COLOR color);
+			void editText(int id, std::string text);
 			void setFont(std::string filename);
 			std::vector<TEXT> t;
+			int currentID;
 		private:
 			
 			ALLEGRO_FONT* font;

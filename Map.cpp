@@ -6,25 +6,19 @@ JMAP::JMAP()
 
 JMAP::~JMAP()
 {
-	al_destroy_bitmap(renderedMap);
-	for(std::vector<ALLEGRO_BITMAP*>::iterator it = tiles.begin(); it < tiles.end(); it++)
-	{
-		al_destroy_bitmap(*it);
-	}
-	tileNames.clear();
-	scriptName.clear();
-	tiles.clear();
 }
 void JMAP::init()
 {
-	renderedMap = al_create_bitmap(4000, 4000);
+	renderedMap = al_create_bitmap(MAPSIZE*20, MAPSIZE*20);
+	topRenderedMap = al_create_bitmap(MAPSIZE*20, MAPSIZE*20);
 	textures=0;
-	scripts = 0;
-	for(int x = 0; x < 200; x++)
+	scripts=0;
+	for(int x = 0; x < MAPSIZE; x++)
 	{
-		for(int y = 0; y < 200; y++)
+		for(int y = 0; y < MAPSIZE; y++)
 		{
 			blocks[x][y]=0;
+			topBlocks[x][y]= -1;
 		}
 	}
 	showCollisions = false;
@@ -39,7 +33,7 @@ int JMAP::load(const char* filename)
 	}
 	std::string line;
 	std::getline(file, line);
-	if(line != "JMAP 2.0"  &&  line != "JMAP 2.0.1" && line != "JMAP 2.0.2" && line != "JMAP 2.0.3")
+	if(line != "JMAP 2.0"  &&  line != "JMAP 2.0.1" && line != "JMAP 2.0.2" && line != "JMAP 2.0.3" && line != "JMAP 2.0.4")
 	{
 		return 409;
 	}
@@ -57,6 +51,10 @@ int JMAP::load(const char* filename)
 	else if(line == "JMAP 2.0.3")
 	{
 		version = 4;
+	}
+	else if(line == "JMAP 2.0.4")
+	{
+		version = 5;
 	}
 	std::getline(file, line);
 	int textures = atoi(line.c_str());
@@ -100,13 +98,30 @@ int JMAP::load(const char* filename)
 	{
 		return 409;
 	}
-	for(int y = 0; y < 200; y++)
+	for(int y = 0; y < MAPSIZE; y++)
 	{
 		std::getline(file, line);
 		std::vector<std::string> tmp = split(line, ',');
-		for(int x = 0; x < 200; x++)
+		for(int x = 0; x < MAPSIZE; x++)
 		{
 			blocks[x][y]=atoi(tmp[x].c_str());
+		}
+	}
+	if(version >= 5)
+	{
+		std::getline(file, line);
+		if(line != "MAP DATA1:")
+		{
+			return 409;
+		}
+		for(int y = 0; y < MAPSIZE; y++)
+		{
+			std::getline(file, line);
+			std::vector<std::string> tmp = split(line, ',');
+			for(int x = 0; x < MAPSIZE; x++)
+			{
+				topBlocks[x][y]=atoi(tmp[x].c_str());
+			}
 		}
 	}
 	if(version >= 2)
@@ -116,11 +131,11 @@ int JMAP::load(const char* filename)
 		{
 			return 409;
 		}
-		for(int y = 0; y < 200; y++)
+		for(int y = 0; y < MAPSIZE; y++)
 		{
 			std::getline(file, line);
 			std::vector<std::string> tmp = split(line, ',');
-			for(int x = 0; x < 200; x++)
+			for(int x = 0; x < MAPSIZE; x++)
 			{
 				collision[x][y]=atoi(tmp[x].c_str());
 			}
@@ -151,7 +166,7 @@ int JMAP::save(const char* filename)
 	str << filename;
 	std::string temp = str.str();
 	file.open(filename);
-	file << "JMAP 2.0.3" << std::endl;
+	file << "JMAP 2.0.4" << std::endl;
 	file<<tileNames.size()<<std::endl;
 	for(std::vector<std::string>::iterator it = tileNames.begin(); it < tileNames.end(); it++)
 	{
@@ -163,25 +178,38 @@ int JMAP::save(const char* filename)
 		file<<*it<<std::endl;
 	}
 	file << "MAP DATA:" << std::endl;
-	for(int y = 0; y < 200; y++)
+	for(int y = 0; y < MAPSIZE; y++)
 	{
-		for(int x = 0; x < 200; x++)
+		for(int x = 0; x < MAPSIZE; x++)
 		{
 			file << blocks[x][y];
-			if(x < 199)
+			if(x < MAPSIZE-1)
 			{
 				file << ',';
 			}
 		}
 		file<<std::endl;
 	}
-	file << "COLLISION DATA:" << std::endl;
-	for(int y = 0; y < 200; y++)
+	file << "MAP DATA1:" << std::endl;
+	for(int y = 0; y < MAPSIZE; y++)
 	{
-		for(int x = 0;  x < 200; x++)
+		for(int x = 0; x < MAPSIZE; x++)
+		{
+			file << topBlocks[x][y];
+			if(x < MAPSIZE-1)
+			{
+				file << ',';
+			}
+		}
+  		file<<std::endl;
+	}
+	file << "COLLISION DATA:" << std::endl;
+	for(int y = 0; y < MAPSIZE; y++)
+	{
+		for(int x = 0;  x < MAPSIZE; x++)
 		{
 			file<<collision[x][y];
-			if(x < 199)
+			if(x < MAPSIZE-1)
 			{
 				file << ',';
 			}
@@ -193,6 +221,10 @@ int JMAP::save(const char* filename)
 }
 int JMAP::addTexture(const char* filename)
 {
+	if(containsString(tileNames, filename))
+	{
+		return 0;
+	}
 	ALLEGRO_BITMAP *tbmp;
 	tbmp = al_load_bitmap(filename);
 	if(!tbmp)
@@ -205,36 +237,88 @@ int JMAP::addTexture(const char* filename)
 	textures++;
 	return 0;
 }
+int JMAP::addScript(const char* filename)
+{
+	if(containsString(scriptName, filename))
+	{
+		return 0;
+	}
+	scripts++;
+	scriptName.push_back(filename);
+	return 0;
+}
+int JMAP::delScript(int key)
+{
+	if(key <= scriptName.size())
+	{
+		scriptName.erase(scriptName.begin()+key);
+		scripts--;
+		return 0;
+	}
+	return 0;
+}
+bool JMAP::containsString(std::vector<std::string> vec, std::string s)
+{
+	for(std::vector<std::string>::iterator it = vec.begin(); it < vec.end(); it++)
+	{
+		if(*it==s)
+		{
+			return true;
+		}
+	}
+	return false;
+}
 void JMAP::clearMap()
 {
 	al_destroy_bitmap(renderedMap);
-	renderedMap = al_create_bitmap(4000, 4000);
+	al_destroy_bitmap(topRenderedMap);
+	renderedMap = al_create_bitmap(MAPSIZE*20, MAPSIZE*20);
+	topRenderedMap = al_create_bitmap(MAPSIZE*20, MAPSIZE*20);
 	textures=0;
-	for(int x = 0; x < 200; x++)
+	for(int x = 0; x < MAPSIZE; x++)
 	{
-		for(int y = 0; y < 200; y++)
+		for(int y = 0; y < MAPSIZE; y++)
 		{
+			topBlocks[x][y]=-1;
 			blocks[x][y]=0;
 			collision[x][y]=0;
 		}
 	}
+	tileNames.clear();
+	scriptName.clear();
 	for(std::vector<ALLEGRO_BITMAP*>::iterator it = tiles.begin(); it < tiles.end(); it++)
 	{
 		al_destroy_bitmap(*it);
 	}
-	tileNames.clear();
-	scriptName.clear();
 	tiles.clear();
 }
 int JMAP::debugRender()
 {
 	al_set_target_bitmap(renderedMap);
-	for(int x = 0; x < 200; x++)
+	al_clear_to_color(al_map_rgb(0, 0, 0));
+	for(int x = 0; x < MAPSIZE; x++)
 	{
-		for(int y = 0; y < 200; y++)
+		for(int y = 0; y < MAPSIZE; y++)
 		{
 			if(tiles.at(blocks[x][y]))
+			{
 				al_draw_bitmap(tiles.at(blocks[x][y]), x*20, y*20, 0);
+			}
+		}
+	}
+	al_set_target_bitmap(topRenderedMap);
+	al_clear_to_color(al_map_rgba(0, 0, 0, 0));
+	for(int x = 0; x < MAPSIZE; x++)
+	{
+		for(int y = 0; y < MAPSIZE; y++)
+		{
+			if(topBlocks[x][y] >=0)
+			{
+				if(tiles.at(topBlocks[x][y]))
+				{
+					al_draw_bitmap(tiles.at(topBlocks[x][y]), x*20, y*20, 0);
+				}
+			}
 			if(showCollisions)
 			{
 				if(collision[x][y] == 1)

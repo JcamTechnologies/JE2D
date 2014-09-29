@@ -53,7 +53,16 @@ void Sound::remove(std::string index)
 		samples.erase(index);
 	}
 }
-
+void Sound::removeAll()
+{
+	al_stop_samples();
+	playing.clear();
+	for(std::map<std::string, ALLEGRO_SAMPLE*>::iterator it = samples.begin(); it != samples.end(); it++)
+	{
+		al_destroy_sample(it->second);
+	}
+	samples.clear();
+}
 bool Sound::add(std::string filename, std::string key)
 {
 	ALLEGRO_SAMPLE* tmp = al_load_sample(filename.c_str());
